@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cờ Vua Online</title>
+    <link href="style.css" rel="stylesheet" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+  </head>
+  <body>
+    <div>
+      <a href="./TrangChu.html">
+        <button
+          class="button btn-secondary"
+          onclick="showScreen('menu-screen')"
+        >
+          ← Quay lại
+        </button>
+      </a>
+    </div>
+    <div id="app-container">
+      <!-- Bàn cờ chính -->
+      <div id="main-content">
+        <div id="chessboard" class="board"></div>
+      </div>
+
+      <!-- Sidebar -->
+      <div id="sidebar">
+        <!-- Nút điều khiển -->
+        <div class="control-row">
+          <button id="btn-undo" class="control-button">↩️ Quay lại</button>
+          <button id="btn-restart" class="control-button">🔄 Chơi lại</button>
+          <button id="btn-rules" class="control-button">📜 Luật chơi</button>
+        </div>
+        <div id="sidebar">
+  <div class="control-row">
+    </div>
+
+  <div id="game-status" style="
+      text-align: center; 
+      font-weight: bold; 
+      margin: 15px 0; 
+      padding: 10px; 
+      background: #eee; 
+      border-radius: 5px;
+      color: #333;">
+      ⚪ Lượt của Trắng
+  </div>
+        <!-- Thời gian -->
+        <div class="sidebar-section">
+          <h4>⏱️ Thiết lập thời gian</h4>
+          <div class="time-row">
+            <button id="btn-time-up" class="small-btn">▲</button>
+            <span id="timer-display">5:00</span>
+            <button id="btn-time-down" class="small-btn">▼</button>
+          </div>
+          <div class="time-control-row">
+            <button id="btn-time-start" class="start-btn">▶️ Bắt đầu</button>
+            <button id="btn-time-pause" class="start-btn">⏸️ Tạm dừng</button>
+            <button id="btn-time-reset" class="start-btn">🔄 Khôi phục</button>
+            <button id="btn-resign" class="control-button" style="background-color: #ece6e5;">🏳️ Đầu hàng</button>
+          </div>
+          <div class="sidebar-section">
+  <h4>⏱️ Thời gian</h4>
+  
+  <div class="toggle-container" style="margin-top: 10px; border-top: 1px solid #ccc; padding-top: 10px;">
+    <span>⏳ Tính giờ</span>
+    <label class="toggle-switch">
+      <input type="checkbox" id="toggle-timer" checked />
+      <span class="slider"></span>
+    </label>
+  </div>
+  </div>
+        </div>
+
+        <!-- AI & Gợi ý -->
+        <div class="sidebar-section">
+          <label for="ai-level" style="font-size: 18px; font-weight: bold"
+            >🤖 Cấp độ :</label
+          >
+          <select
+            id="ai-level"
+            style="
+              width: 100%;
+              padding: 10px;
+              font-size: 16px;
+              margin-top: 10px;
+              border-radius: 8px;
+            "
+          >
+            <option value="1">⭐ Nhập môn</option>
+            <option value="2" selected>⭐⭐ Thành thạo</option>
+            <option value="3">⭐⭐⭐ Cao thủ</option>
+            <option value="4">⭐⭐⭐⭐ Kiện tướng</option>
+          </select>
+
+          <div class="toggle-container">
+            <span>💡 Gợi ý nước đi</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggle-hint" checked />
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Quân bị bắt -->
+        <div class="captured-section">
+          <div class="captured-column">
+            <h4>⚪ Quân trắng mất</h4>
+            <div id="captured-white" class="captured-pieces"></div>
+          </div>
+          <div class="captured-column">
+            <h4>⚫ Quân đen mất</h4>
+            <div id="captured-black" class="captured-pieces"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL CHỌN CẤP ĐỘ (Hiện đầu tiên) -->
+    <div id="level-selection-modal" class="modal">
+      <div class="modal-content">
+        <h2>🎯 LỰA CHỌN CẤP ĐỘ</h2>
+        <div class="level-selection-grid">
+          <button class="level-btn level-easy" data-level="1">
+            <div class="level-icon">⭐</div>
+            <div class="level-title">Nhập môn</div>
+          </button>
+          <button class="level-btn level-medium" data-level="2">
+            <div class="level-icon">⭐⭐</div>
+            <div class="level-title">Thành thạo</div>
+          </button>
+          <button class="level-btn level-hard" data-level="3">
+            <div class="level-icon">⭐⭐⭐</div>
+            <div class="level-title">Cao thủ</div>
+          </button>
+          <button class="level-btn level-expert" data-level="4">
+            <div class="level-icon">⭐⭐⭐⭐</div>
+            <div class="level-title">Kiện tướng</div>
+          </button>
+        </div>
+      </div>
+    </div>
+<div id="restart-modal" class="modal">
+  <div class="modal-content" style="text-align: center;">
+    <h2 style="color: #28a745;">🔄 CHƠI VÁN MỚI?</h2>
+    <p style="font-size: 18px; margin: 20px 0;">Bạn có chắc chắn muốn hủy ván này để chơi lại không?</p>
+    
+    <div style="display: flex; justify-content: center; gap: 15px;">
+      <button id="confirm-restart-btn" style="
+          background: #28a745; 
+          color: white; 
+          padding: 10px 20px; 
+          border: none; 
+          border-radius: 5px; 
+          cursor: pointer;
+          font-weight: bold;">
+          ✅ Đồng ý
+      </button>
+
+      <button id="cancel-restart-btn" style="
+          background: #999; 
+          color: white; 
+          padding: 10px 20px; 
+          border: none; 
+          border-radius: 5px; 
+          cursor: pointer;">
+          ❌ Hủy
+      </button>
+    </div>
+  </div>
+</div>
+    <!-- MODAL CHỌN MÀU (Hiện sau khi chọn cấp độ) -->
+    <div id="chooseColorModal" class="modal">
+      <div class="modal-content">
+        <h3>Chọn màu quân cờ của bạn</h3>
+        <div
+          style="
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 20px;
+          "
+        >
+          <button id="chooseWhite" class="color-btn">⚪ Trắng</button>
+          <button id="chooseBlack" class="color-btn">⚫ Đen</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal luật chơi -->
+    <div id="rules-modal" class="modal">
+      <div class="modal-content">
+        <span class="close-btn">&times;</span>
+        <h2>📜 Luật Chơi Cờ Vua</h2>
+        <ul>
+          <li><b>1. Nguyên tắc di chuyển</b></li>
+          <li>♟ <b>Tốt</b>: Đi thẳng 1 ô, ăn chéo. Lượt đầu có thể đi 2 ô.</li>
+          <li>♞ <b>Mã</b>: Đi hình chữ L (2 ô theo 1 hướng, 1 ô vuông góc).</li>
+          <li>♝ <b>Tượng</b>: Đi chéo không giới hạn.</li>
+          <li>♜ <b>Xe</b>: Đi thẳng hoặc ngang không giới hạn.</li>
+          <li>♛ <b>Hậu</b>: Kết hợp Xe + Tượng (đi mọi hướng).</li>
+          <li>♚ <b>Vua</b>: Đi 1 ô theo mọi hướng, không vào thế chiếu.</li>
+
+          <li style="margin-top: 15px"><b>2. Quy luật đặc biệt</b></li>
+          <li>
+            <b>Nhập thành</b>: Vua chưa di chuyển + Xe chưa di chuyển + Không ô
+            nào giữa bị tấn công → Vua đi 2 ô về phía Xe, Xe nhảy qua Vua.
+          </li>
+          <li>
+            <b>Bắt tốt qua đường (En passant)</b>: Khi tốt địch đi 2 ô từ vị trí
+            ban đầu và dừng bên cạnh tốt của bạn → Có thể bắt tốt địch như thể
+            nó chỉ đi 1 ô.
+          </li>
+          <li>
+            <b>Phong cấp</b>: Tốt đến cuối bàn → Được đổi thành Hậu, Xe, Tượng
+            hoặc Mã.
+          </li>
+
+          <li style="margin-top: 15px"><b>3. Kết thúc ván cờ</b></li>
+          <li>
+            ⚠️ <b>Chiếu tướng</b>: Vua bị đe dọa → Phải di chuyển, chặn hoặc bắt
+            quân tấn công.
+          </li>
+          <li>💀 <b>Chiếu bí</b>: Vua bị chiếu và không thể thoát → Thua.</li>
+          <li>
+            🤝 <b>Hòa cờ</b>:
+            <ul>
+              <li>
+                - Không có nước đi hợp lệ nhưng không bị chiếu (Stalemate)
+              </li>
+              <li>- 50 nước đi không bắt quân/di chuyển tốt</li>
+              <li>- Không đủ quân để chiếu bí</li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Modal phong cấp -->
+    <div id="promotion-modal" class="modal">
+      <div class="modal-content">
+        <h3>Chọn quân phong cấp</h3>
+        <div
+          style="
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+          "
+        >
+          <button id="promote-queen" class="promotion-btn">♕ Hậu</button>
+          <button id="promote-rook" class="promotion-btn">♖ Xe</button>
+          <button id="promote-bishop" class="promotion-btn">♗ Tượng</button>
+          <button id="promote-knight" class="promotion-btn">♘ Mã</button>
+        </div>
+      </div>
+    </div>
+    <div id="resign-modal" class="modal">
+  <div class="modal-content" style="text-align: center;">
+    <h2 style="color: #d9534f;">🏳️ ĐẦU HÀNG?</h2>
+    <p style="font-size: 18px; margin: 20px 0;">Bạn có chắc chắn muốn chịu thua ván này không?</p>
+    
+    <div style="display: flex; justify-content: center; gap: 15px;">
+      <button id="confirm-resign-btn" style="
+          background: #d9534f; 
+          color: white; 
+          padding: 10px 20px; 
+          border: none; 
+          border-radius: 5px; 
+          cursor: pointer;
+          font-weight: bold;">
+          🏳️ Chịu thua
+      </button>
+
+      <button id="cancel-resign-btn" style="
+          background: #999; 
+          color: white; 
+          padding: 10px 20px; 
+          border: none; 
+          border-radius: 5px; 
+          cursor: pointer;">
+          ❌ Đánh tiếp
+      </button>
+    </div>
+  </div>
+</div>
+<div id="game-over-modal" class="modal">
+  <div class="modal-content" style="text-align: center; border: 3px solid #333;">
+    <h2 id="game-over-title" style="font-size: 30px; margin-bottom: 10px;"></h2>
+    
+    <p id="game-over-message" style="font-size: 18px; margin-bottom: 20px;"></p>
+    
+    <button id="btn-gameover-restart" style="
+        background: #007bff; 
+        color: white; 
+        padding: 12px 24px; 
+        border: none; 
+        border-radius: 5px; 
+        cursor: pointer; 
+        font-weight: bold; 
+        font-size: 16px;">
+        🔄 Chơi ván mới
+    </button>
+  </div>
+</div>
+    <script src="script.js"></script>
+  </body>
+</html>

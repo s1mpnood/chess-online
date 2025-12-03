@@ -1,0 +1,493 @@
+:root {
+    --primary-color: #38a69a;
+    --accent-color: #ffb300;
+    --background-color: #eceff1;
+    --text-color: #212121;
+    --board-light: #f0d9b5;
+    --board-dark: #b88762;
+    --hover-color: #84b8ae;
+    --danger-color: #e53935;
+}
+
+/* ===== Reset ===== */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Roboto', sans-serif;
+}
+
+body {
+    background-color: var(--background-color);
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+}
+
+/* ===== Layout Chính ===== */
+#app-container {
+    display: flex;
+    gap: 25px;
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    min-width: 1200px;  
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.button{
+    width: 100%;
+    padding: 15px;
+    margin: 10px 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+      
+/* ===== Bàn cờ ===== */
+#main-content {
+    width: 750px;
+    display: flex;
+    justify-content: center;
+}
+
+#chessboard {
+    width: 700px;
+    height: 700px;
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(8, 1fr);
+    border: 3px solid var(--text-color);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+/* ===== Các ô cờ ===== */
+.captured-piece {
+  font-size: 0.8em;
+  display: inline-block;
+  margin: 0 2px;
+  opacity: 0.9;
+}
+
+#captured-white, #captured-black {
+  min-height: 30px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+.square {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.square .piece {
+    font-size: 60px;
+    user-select: none;
+}
+
+.light { background: var(--board-light); }
+.dark  { background: var(--board-dark); }
+
+.square.selected {
+    background: rgba(255, 255, 0, 0.5) !important;
+}
+
+.square.highlight::after {
+    content: "";
+    width: 20px;
+    height: 20px;
+    background: rgba(0, 200, 0, 0.7);
+    border-radius: 50%;
+    position: absolute;
+    top: 50%; 
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* ===== Sidebar ===== */
+#sidebar {
+    width: 320px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+#sidebar h3 {
+    color: var(--primary-color);
+    font-size: 1.4rem;
+    margin-bottom: 5px;
+}
+
+#sidebar h4 {
+    font-size: 1.1rem;
+    margin-bottom: 8px;
+}
+
+.sidebar-section {
+    padding-bottom: 15px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+/* ===== Nút bấm ===== */
+.control-button {
+    padding: 10px;
+    border: none;
+    background: var(--primary-color);
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.2s;
+    width: 100%;
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.control-button:hover {
+    opacity: 0.85;
+    transform: translateY(-1px);
+}
+
+.control-row {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* ===== Thời gian ===== */
+.time-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+#timer-display {
+    font-size: 1.3rem;
+    font-weight: bold;
+    padding: 5px 5px;
+    background: #f5f5f5;
+    border-radius: 8px;
+    border: 2px solid var(--primary-color);
+    min-width: 100px;
+    text-align: center;
+}
+
+.small-btn {
+    padding: 8px 15px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.small-btn:hover {
+    opacity: 0.85;
+}
+
+.time-control-row {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.start-btn {
+    padding: 10px;
+    border: none;
+    background: var(--primary-color);
+    color: white;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: 0.2s;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.start-btn:hover {
+    opacity: 0.85;
+}
+
+/* ===== AI Settings ===== */
+#ai-level {
+    font-size: 16px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    width: 100%;
+    margin-top: 8px;
+    border: 2px solid #ddd;
+    background: white;
+    cursor: pointer;
+}
+
+label[for="ai-level"] {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+/* ===== Toggle Switch ===== */
+.toggle-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 5px;
+    padding: 10px;
+    background: #f9f9f9;
+    border-radius: 8px;
+}
+
+.toggle-container span {
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 30px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: 0.3s;
+    border-radius: 30px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 22px;
+    width: 22px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: var(--primary-color);
+}
+
+input:checked + .slider:before {
+    transform: translateX(30px);
+}
+
+/* ===== Quân bị bắt ===== */
+.captured-section {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.captured-column h4 {
+    margin-bottom: 5px;
+    font-size: 1rem;
+}
+
+.captured-pieces {
+    min-height: 50px;
+    font-size: 28px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px;
+    background: #f9f9f9;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+}
+
+/* ===== MODAL ===== */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.6);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+}
+
+.modal.active {
+    display: flex !important;
+}
+
+.modal-content {
+    background: white;
+    padding: 30px 40px;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+    position: relative;
+}
+
+.modal-content h2 {
+    margin-bottom: 20px;
+    color: var(--primary-color);
+}
+
+.modal-content h3 {
+    margin-bottom: 15px;
+    color: var(--text-color);
+}
+
+.modal-content ul {
+    text-align: left;
+    line-height: 1.8;
+}
+
+.modal-content ul li {
+    margin-bottom: 8px;
+}
+
+.close-btn, .close {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 30px;
+    font-weight: bold;
+    cursor: pointer;
+    color: #999;
+    transition: 0.2s;
+}
+
+.close-btn:hover, .close:hover {
+    color: var(--danger-color);
+}
+
+/* ===== MODAL CHỌN CẤP ĐỘ ===== */
+.level-selection-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.level-btn {
+    padding: 20px;
+    border: 3px solid #ddd;
+    border-radius: 12px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-align: center;
+}
+
+.level-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.level-easy { border-color: #4caf50; }
+.level-easy:hover { background: #4caf5010; }
+
+.level-medium { border-color: #2196f3; }
+.level-medium:hover { background: #2196f310; }
+
+.level-hard { border-color: #ff9800; }
+.level-hard:hover { background: #ff980010; }
+
+.level-expert { border-color: #f44336; }
+.level-expert:hover { background: #f4433610; }
+
+.level-icon {
+    font-size: 2rem;
+    margin-bottom: 10px;
+}
+
+.level-title {
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: var(--text-color);
+}
+
+.level-desc {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+/* ===== MODAL CHỌN MÀU ===== */
+.color-btn {
+    padding: 15px 40px;
+    font-size: 18px;
+    cursor: pointer;
+    border-radius: 8px;
+    border: 2px solid var(--primary-color);
+    background: white;
+    color: var(--primary-color);
+    font-weight: 600;
+    transition: 0.2s;
+}
+
+.color-btn:hover {
+    background: var(--primary-color);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+/* ===== MODAL PHONG CẤP ===== */
+.promotion-btn {
+    padding: 20px 30px;
+    font-size: 32px;
+    cursor: pointer;
+    border-radius: 8px;
+    border: 2px solid var(--primary-color);
+    background: white;
+    transition: 0.2s;
+}
+
+.promotion-btn:hover {
+    background: var(--primary-color);
+    color: white;
+    transform: scale(1.1);
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 1250px) {
+    #app-container {
+        min-width: auto;
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    #sidebar {
+        width: 100%;
+        max-width: 700px;
+    }
+}

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cờ Vua Online</title>
+    <link href="TrangChu.css" rel="stylesheet" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    
+  </head>
+  <body>
+    <div id="app-container">
+      <!-- MENU CHÍNH -->
+      <div id="menu-screen" class="screen active">
+        <h1>♔ CỜ VUA ♚</h1>
+        <h2></h2>
+        <a href="./BanCo.html">
+          <button class="button btn-primary">🤖 Đánh với Máy</button>
+        </a>
+        <button
+          class="button btn-success"
+          onclick="showScreen('player-screen')"
+        >
+          👥 Đánh với Người
+        </button>
+      </div>
+
+      <!-- CHỌN CẤP ĐỘ AI -->
+      <div id="level-screen" class="screen">
+        <h2>Chọn Cấp Độ AI</h2>
+        <div class="level-grid">
+          <a
+            href="http://127.0.0.1:61236/python-chess-main/python-chess-main/FE/BanCo.html"
+            ><button
+              class="button btn-success"
+              onclick="startAIGame('Nhập Môn')"
+            >
+              ⭐<br />Nhập Môn
+            </button></a
+          >
+          <a
+            href="http://127.0.0.1:61236/python-chess-main/python-chess-main/FE/BanCo.html"
+            ><button
+              class="button btn-info"
+              onclick="startAIGame('Thành Thạo')"
+            >
+              ⭐⭐<br />
+              Thành Thạo
+            </button></a
+          >
+          <a
+            href="http://127.0.0.1:61236/python-chess-main/python-chess-main/FE/BanCo.html"
+            ><button
+              class="button btn-warning"
+              onclick="startAIGame('Cao Thủ')"
+            >
+              ⭐⭐⭐<br />
+              Cao Thủ
+            </button></a
+          >
+          <a
+            href="http://127.0.0.1:61236/python-chess-main/python-chess-main/FE/BanCo.html"
+            ><button
+              class="button btn-danger"
+              onclick="startAIGame('Kiện Tướng')"
+            >
+              ⭐⭐⭐⭐<br />
+              Kiện Tướng
+            </button></a
+          >
+        </div>
+        <button
+          class="button btn-secondary"
+          onclick="showScreen('menu-screen')"
+        >
+          ← Quay lại
+        </button>
+      </div>
+
+      <!-- ĐÁNH VỚI NGƯỜI -->
+      <div id="player-screen" class="screen">
+        <h2>Đánh với Người</h2>
+
+        <div class="input-group">
+          <label>Tên của bạn:</label>
+          <input
+            type="text"
+            id="player-name"
+            placeholder="Nhập tên người chơi"
+            maxlength="20"
+          />
+        </div>
+
+        <div class="input-group">
+          <label>Chọn hạng của bạn:</label>
+          <div class="rank-selector">
+            <div class="rank-option" onclick="selectRank('bronze')">
+              <div class="rank-icon">🥉</div>
+              <div class="rank-name">Đồng</div>
+            </div>
+            <div class="rank-option" onclick="selectRank('silver')">
+              <div class="rank-icon">🥈</div>
+              <div class="rank-name">Bạc</div>
+            </div>
+            <div class="rank-option" onclick="selectRank('gold')">
+              <div class="rank-icon">🥇</div>
+              <div class="rank-name">Vàng</div>
+            </div>
+          </div>
+        </div>
+
+        <button
+          class="button btn-primary"
+          onclick="findMatch()"
+          id="find-match-btn"
+        >
+          🎮 Tìm Trận Đấu
+        </button>
+
+        <div id="match-status"></div>
+
+        <button
+          class="button btn-secondary"
+          onclick="showScreen('menu-screen')"
+        >
+          ← Quay lại
+        </button>
+      </div>
+
+      <!-- MÀN HÌNH CHỜ -->
+      <div id="waiting-screen" class="screen">
+        <h2>Đang tìm đối thủ...</h2>
+        <div class="info-text">
+          <p>Đang tìm người chơi cùng hạng với bạn</p>
+          <p style="margin-top: 10px">⏳ Vui lòng chờ...</p>
+        </div>
+        <button class="button btn-secondary" onclick="cancelMatch()">
+          Hủy tìm kiếm
+        </button>
+      </div>
+
+      <!-- MÀN HÌNH TẠO/VÀO PHÒNG -->
+      <div id="room-screen" class="screen">
+        <h2>Phòng Riêng</h2>
+
+        <button class="button btn-primary" onclick="createRoom()">
+          ➕ Tạo Phòng Mới
+        </button>
+
+        <div id="room-code-section" style="display: none">
+          <div class="room-code-display">
+            <p>Mã Phòng:</p>
+            <div class="room-code" id="room-code-display"></div>
+          </div>
+          <p class="info-text">Chia sẻ mã này với bạn bè để họ vào phòng</p>
+        </div>
+
+        <div class="input-group" style="margin-top: 30px">
+          <label>Hoặc nhập mã phòng để vào:</label>
+          <input
+            type="text"
+            id="room-code-input"
+            placeholder="Nhập mã 6 số"
+            maxlength="6"
+          />
+        </div>
+
+        <button class="button btn-success" onclick="joinRoom()">
+          🚪 Vào Phòng
+        </button>
+
+        <button
+          class="button btn-secondary"
+          onclick="showScreen('menu-screen')"
+        >
+          ← Quay lại
+        </button>
+      </div>
+    </div>
+  </body>
+  <script src="script.js"></script>
+</html>

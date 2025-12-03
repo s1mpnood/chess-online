@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cờ Vua - Người Với Người</title>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Login Panel -->
+        <div class="login-panel" id="loginPanel">
+            <h2>🎮 Cờ Vua</h2>
+            
+            <div class="form-group">
+                <label for="playerName">Tên của bạn:</label>
+                <input type="text" id="playerName" placeholder="Nhập tên..." maxlength="20">
+            </div>
+
+            <div class="form-group">
+                <label for="roomId">ID Phòng:</label>
+                <input type="text" id="roomId" placeholder="Nhập hoặc tạo ID phòng..." maxlength="20">
+            </div>
+
+            <button class="btn" id="joinBtn" onclick="joinGame()">Vào Phòng</button>
+
+            <div class="error-message" id="loginError"></div>
+            <div class="success-message" id="loginSuccess"></div>
+
+            <div class="game-info">
+                💡 <strong>Hướng dẫn:</strong>
+                <br>• Nhập ID phòng để tạo hoặc tham gia
+                <br>• Chia sẻ ID phòng cho bạn bè
+                <br>• Người thứ nhất là Trắng, người thứ hai là Đen
+            </div>
+        </div>
+
+        <!-- Game Board -->
+        <div class="game-board-container" id="gameContainer">
+            <div class="board-header">
+                <h2>🎮 Trò Chơi Cờ Vua</h2>
+                <p id="gameTitle"></p>
+            </div>
+
+            <div class="game-status">
+                <div class="status-item" id="whiteStatus">
+                    <label>Người Trắng</label>
+                    <span id="whiteName">Chờ...</span>
+                </div>
+                <div class="status-item active" id="turnStatus">
+                    <label>Lượt Chơi</label>
+                    <span id="currentTurn">Trắng</span>
+                </div>
+                <div class="status-item" id="blackStatus">
+                    <label>Người Đen</label>
+                    <span id="blackName">Chờ...</span>
+                </div>
+            </div>
+
+            <div class="chessboard" id="chessboard"></div>
+
+            <div class="error-message" id="gameError"></div>
+            <div class="success-message" id="gameSuccess"></div>
+
+            <div class="controls">
+                <button class="btn-control" id="resetBtn" onclick="resetGame()">Chơi Lại</button>
+                <button class="btn-control" id="leaveBtn" onclick="leaveGame()">Rời Phòng</button>
+            </div>
+
+            <div class="moves-history" id="movesHistory">
+                <h4>📝 Lịch Sử Nước Đi</h4>
+                <div id="movesList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

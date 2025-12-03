@@ -1,0 +1,13 @@
+{
+  "name": "chess-online",
+  "version": "1.0.0",
+  "description": "Real-time Chess Game with Socket.IO",
+  "scripts": {
+    "start": "cd BE && npm start",
+    "install-backend": "cd BE && npm install",
+    "dev": "cd BE && npm run dev"
+  },
+  "keywords": ["chess", "online", "socket.io", "multiplayer"],
+  "author": "",
+  "license": "MIT"
+}
