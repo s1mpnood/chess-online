@@ -10,7 +10,8 @@ const io = socketIo(server, {
     cors: {
         origin: [
             "http://localhost:5000",
-            "http://localhost:3000", 
+            "http://localhost:3000",
+            "https://chess-online-rho.vercel.app",
             "https://*.vercel.app",
             "https://*.onrender.com"
         ],
