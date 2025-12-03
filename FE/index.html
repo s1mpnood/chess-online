@@ -71,6 +71,7 @@
             <div class="user-info">
                 <span id="welcomeUser">👤 Khách</span>
                 <button class="btn-logout" onclick="logout()">Đăng xuất</button>
+                <button class="btn-ranking" onclick="showRanking()">🏆 Xếp Hạng</button>
             </div>
             <h1>🎮 Cờ Vua</h1>
             <p>Chọn chế độ chơi</p>
@@ -87,6 +88,15 @@
                     <span class="mode-icon">🌐</span>
                     <h3>Tạo Phòng</h3>
                 </button>
+            </div>
+        </div>
+        
+        <!-- Ranking Modal -->
+        <div class="modal" id="rankingModal" style="display:none;">
+            <div class="modal-content" style="max-width: 600px;">
+                <h2>🏆 Bảng Xếp Hạng</h2>
+                <div id="rankingList" style="max-height: 400px; overflow-y: auto;"></div>
+                <button class="btn-control" onclick="closeRanking()">Đóng</button>
             </div>
         </div>
 

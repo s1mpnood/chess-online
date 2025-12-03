@@ -320,16 +320,20 @@ io.on('connection', (socket) => {
         console.log(`📡 Broadcasted to room ${room_id}: ${room.players.length} players`);
         console.log(`📊 Game state FEN: ${room.game_state.fen}`);
 
-        // Kiểm tra game over
+        // Kiểm tra game over với Chess.js built-in methods
         if (room.game.game_over()) {
             let result = '';
             if (room.game.in_checkmate()) {
                 const winner = room.game.turn() === 'w' ? 'black' : 'white';
                 result = `Chiếu hết! ${winner === 'white' ? 'Trắng' : 'Đen'} thắng!`;
+            } else if (room.game.in_stalemate()) {
+                result = 'Hòa cờ do chiếu bí (Stalemate)!';
+            } else if (room.game.in_threefold_repetition()) {
+                result = 'Hòa cờ do lặp nước đi 3 lần!';
+            } else if (room.game.insufficient_material()) {
+                result = 'Hòa cờ do không đủ quân để chiếu hết!';
             } else if (room.game.in_draw()) {
                 result = 'Hòa cờ!';
-            } else if (room.game.in_stalemate()) {
-                result = 'Hòa do stalemate!';
             }
             
             io.to(room_id).emit('game_over', { result });
@@ -359,6 +363,21 @@ io.on('connection', (socket) => {
         });
 
         console.log(`🔄 Game reset in room ${room_id}`);
+    });
+    
+    // Player surrendered
+    socket.on('player_surrendered', (data) => {
+        const { room_id, player_name } = data;
+        
+        if (!rooms.has(room_id)) return;
+        
+        // Broadcast surrender - không tính điểm
+        io.to(room_id).emit('player_surrendered_broadcast', {
+            player_name: player_name,
+            message: `${player_name} đã đầu hàng! Trận này không tính điểm.`
+        });
+        
+        console.log(`🏳️ ${player_name} surrendered in room ${room_id}`);
     });
 
     // Disconnect

@@ -11,6 +11,108 @@ let timerInterval = null;
 let pendingPromotionMove = null;
 let currentUser = null; // Thông tin user đăng nhập
 
+// ==================== RANKING SYSTEM ====================
+// Hệ thống xếp hạng (lưu trong localStorage)
+function getRankingData() {
+    const data = localStorage.getItem('chess_ranking');
+    return data ? JSON.parse(data) : {};
+}
+
+function saveRankingData(data) {
+    localStorage.setItem('chess_ranking', JSON.stringify(data));
+}
+
+function getUserRanking(username) {
+    const rankings = getRankingData();
+    return rankings[username] || { points: 0, wins: 0, losses: 0, draws: 0 };
+}
+
+function updateUserRanking(username, points, result) {
+    const rankings = getRankingData();
+    if (!rankings[username]) {
+        rankings[username] = { points: 0, wins: 0, losses: 0, draws: 0 };
+    }
+    
+    rankings[username].points = Math.max(0, rankings[username].points + points); // Không âm
+    
+    if (result === 'win') rankings[username].wins++;
+    else if (result === 'loss') rankings[username].losses++;
+    else if (result === 'draw') rankings[username].draws++;
+    
+    saveRankingData(rankings);
+}
+
+function calculatePoints(gameTimeSeconds, totalTimeSeconds, isWinner) {
+    // 10 phút = 600 giây
+    // Thắng ở phút 1 (540s còn lại) → nhiều điểm nhất
+    // Thắng ở phút 9 (60s còn lại) → ít điểm hơn
+    
+    const timeUsed = totalTimeSeconds - gameTimeSeconds; // Thời gian đã chơi
+    const minutesUsed = timeUsed / 60;
+    
+    if (isWinner) {
+        // Thắng nhanh → nhiều điểm
+        // Công thức: 100 - (số phút đã chơi * 10)
+        // Thắng phút 1: 100 - 10 = 90 điểm
+        // Thắng phút 5: 100 - 50 = 50 điểm
+        // Thắng phút 9: 100 - 90 = 10 điểm
+        return Math.max(10, Math.round(100 - minutesUsed * 10));
+    } else {
+        // Thua nhanh → trừ nhiều điểm
+        // Công thức: -(50 - số phút * 5)
+        // Thua phút 1: -(50 - 5) = -45 điểm
+        // Thua phút 5: -(50 - 25) = -25 điểm
+        // Thua phút 9: -(50 - 45) = -5 điểm
+        return -Math.max(5, Math.round(50 - minutesUsed * 5));
+    }
+}
+
+function showRanking() {
+    const rankings = getRankingData();
+    const rankingList = document.getElementById('rankingList');
+    
+    // Chuyển object thành array và sort theo điểm
+    const sortedRankings = Object.entries(rankings)
+        .map(([username, stats]) => ({ username, ...stats }))
+        .sort((a, b) => b.points - a.points);
+    
+    if (sortedRankings.length === 0) {
+        rankingList.innerHTML = '<p style="text-align:center; color:#888;">Chưa có dữ liệu xếp hạng.</p>';
+    } else {
+        let html = '<table style="width:100%; border-collapse: collapse;">';
+        html += '<thead><tr style="background:#333; color:#fff;">';
+        html += '<th style="padding:10px;">🏅 Hạng</th>';
+        html += '<th style="padding:10px;">👤 Tên</th>';
+        html += '<th style="padding:10px;">🏆 Điểm</th>';
+        html += '<th style="padding:10px;">✅ Thắng</th>';
+        html += '<th style="padding:10px;">❌ Thua</th>';
+        html += '<th style="padding:10px;">🤝 Hòa</th>';
+        html += '</tr></thead><tbody>';
+        
+        sortedRankings.forEach((user, index) => {
+            const isCurrentUser = currentUser && user.username === currentUser.username;
+            const bgColor = isCurrentUser ? '#2a4' : (index % 2 === 0 ? '#222' : '#1a1a1a');
+            html += `<tr style="background:${bgColor};">`;
+            html += `<td style="padding:10px; text-align:center;">${index + 1}</td>`;
+            html += `<td style="padding:10px;">${user.username}${isCurrentUser ? ' (Bạn)' : ''}</td>`;
+            html += `<td style="padding:10px; text-align:center; font-weight:bold; color:#ffd700;">${user.points}</td>`;
+            html += `<td style="padding:10px; text-align:center; color:#4a4;">${user.wins}</td>`;
+            html += `<td style="padding:10px; text-align:center; color:#a44;">${user.losses}</td>`;
+            html += `<td style="padding:10px; text-align:center; color:#888;">${user.draws}</td>`;
+            html += '</tr>';
+        });
+        
+        html += '</tbody></table>';
+        rankingList.innerHTML = html;
+    }
+    
+    document.getElementById('rankingModal').style.display = 'flex';
+}
+
+function closeRanking() {
+    document.getElementById('rankingModal').style.display = 'none';
+}
+
 // ==================== ONLINE MODE - VARIABLES ====================
 // Backend URL Configuration
 // Nếu đang test local: dùng localhost:5000
@@ -108,6 +210,8 @@ if (socket) {
         console.log('✅ Match found!', data);
         currentRoomId = data.room_id;
         currentPlayerColor = data.your_color;
+        gameStartTime = Date.now(); // Bắt đầu tính thời gian
+        isSurrendered = false; // Reset surrender flag
         
         // Khởi tạo game với trạng thái từ server
         game = new Chess(data.game_state.fen);
@@ -185,7 +289,52 @@ if (socket) {
     
     socket.on('game_over', (data) => {
         stopTimer();
-        alert('🏁 ' + data.result);
+        
+        // Tính điểm ranking nếu không có ai surrender
+        if (!isSurrendered && currentUser && gameStartTime) {
+            const gameEndTime = Date.now();
+            const gameTimeSeconds = Math.floor((gameEndTime - gameStartTime) / 1000);
+            const totalTimeSeconds = 600; // 10 phút
+            
+            // Xác định win/loss/draw
+            let result = null;
+            let points = 0;
+            
+            if (data.result.includes('Hòa')) {
+                result = 'draw';
+                points = 5; // Hòa được 5 điểm
+            } else {
+                // Kiểm tra ai thắng
+                const isWhiteWin = data.result.includes('Trắng thắng');
+                const isBlackWin = data.result.includes('Đen thắng');
+                const myColorIsWhite = currentPlayerColor === 'white';
+                
+                const iWin = (myColorIsWhite && isWhiteWin) || (!myColorIsWhite && isBlackWin);
+                
+                if (iWin) {
+                    result = 'win';
+                    points = calculatePoints(timerWhite + timerBlack, totalTimeSeconds * 2, true);
+                } else {
+                    result = 'loss';
+                    points = calculatePoints(timerWhite + timerBlack, totalTimeSeconds * 2, false);
+                }
+            }
+            
+            // Cập nhật ranking
+            updateUserRanking(currentUser.username, points, result);
+            
+            const userRanking = getUserRanking(currentUser.username);
+            alert(`🏁 ${data.result}\n\n📊 ${points >= 0 ? '+' : ''}${points} điểm\n🏆 Tổng điểm: ${userRanking.points}\n✅ Thắng: ${userRanking.wins} | ❌ Thua: ${userRanking.losses} | 🤝 Hòa: ${userRanking.draws}`);
+        } else {
+            alert('🏁 ' + data.result);
+        }
+    });
+    
+    // Nhận thông báo đầu hàng
+    socket.on('player_surrendered_broadcast', (data) => {
+        isSurrendered = true; // Đánh dấu có surrender
+        stopTimer();
+        alert(`🏳️ ${data.message}\n\n⚠️ Trận này không tính điểm xếp hạng.`);
     });
 } else {
     console.error('❌ Socket.IO không được khởi tạo - Chưa cấu hình backend URL!');
@@ -196,6 +345,8 @@ let pendingPromotionMoveOnline = null;
 let gameState = null;
 let currentPlayerColor = null;
 let currentRoomId = null;
+let gameStartTime = null; // Thời điểm bắt đầu game
+let isSurrendered = false; // Có ai đầu hàng không
 
 // Piece symbols
 const pieceMap = {
@@ -1240,7 +1391,13 @@ function checkGameOverLocal() {
         stopTimer();
         if (game.in_checkmate()) {
             const winner = game.turn() === 'w' ? 'Đen' : 'Trắng';
-            showMessageLocal(`🎉 ${winner} chiến thắng!`, 'success');
+            showMessageLocal(`🎉 Chiếu hết! ${winner} chiến thắng!`, 'success');
+        } else if (game.in_stalemate()) {
+            showMessageLocal('🤝 Hòa cờ do chiếu bí (Stalemate)!', 'success');
+        } else if (game.in_threefold_repetition()) {
+            showMessageLocal('🤝 Hòa cờ do lặp nước đi 3 lần!', 'success');
+        } else if (game.insufficient_material()) {
+            showMessageLocal('🤝 Hòa cờ do không đủ quân!', 'success');
         } else if (game.in_draw()) {
             showMessageLocal('🤝 Hòa cờ!', 'success');
         }
@@ -1283,7 +1440,17 @@ function resignGame() {
     if (confirm(`Bạn có chắc chắn muốn đầu hàng?\n${currentTurn} sẽ thua!`)) {
         const winner = game.turn() === 'w' ? 'Đen' : 'Trắng';
         stopTimer();
-        showMessageLocal(`🏳️ ${currentTurn} đã đầu hàng! ${winner} thắng!`, 'info');
+        isSurrendered = true; // Đánh dấu đã đầu hàng
+        
+        // Nếu đang chơi online (random match), thông báo cho server
+        if (currentRoomId && socket) {
+            socket.emit('player_surrendered', { 
+                room_id: currentRoomId,
+                player_name: currentUser ? currentUser.username : 'Người chơi'
+            });
+        }
+        
+        showMessageLocal(`🏳️ ${currentTurn} đã đầu hàng! ${winner} thắng!\n\n⚠️ Trận này không tính điểm xếp hạng.`, 'info');
         setTimeout(() => {
             if (confirm('Chơi lại?')) {
                 resetGameLocal();

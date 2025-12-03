@@ -240,6 +240,24 @@ body {
     transform: scale(1.05);
 }
 
+.btn-ranking {
+    padding: 6px 16px;
+    background: #ffd700;
+    color: #333;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: bold;
+    transition: all 0.2s;
+    margin-left: 10px;
+}
+
+.btn-ranking:hover {
+    background: #ffed4e;
+    transform: scale(1.05);
+}
+
 
 .mode-selection h1 {
     color: #333;
