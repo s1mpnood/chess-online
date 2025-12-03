@@ -8,15 +8,31 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
     cors: {
-        origin: [
-            "http://localhost:5000",
-            "http://localhost:3000",
-            "https://chess-online-rho.vercel.app",
-            "https://*.vercel.app",
-            "https://*.onrender.com"
-        ],
+        origin: function(origin, callback) {
+            // Cho phép requests không có origin (mobile apps, postman, etc.)
+            if (!origin) return callback(null, true);
+            
+            const allowedOrigins = [
+                'http://localhost:5000',
+                'http://localhost:3000',
+                'https://chess-online-rho.vercel.app'
+            ];
+            
+            // Cho phép tất cả subdomain của vercel.app và onrender.com
+            if (origin.includes('.vercel.app') || origin.includes('.onrender.com')) {
+                return callback(null, true);
+            }
+            
+            if (allowedOrigins.includes(origin)) {
+                callback(null, true);
+            } else {
+                console.log('❌ CORS blocked origin:', origin);
+                callback(new Error('Not allowed by CORS'));
+            }
+        },
         methods: ["GET", "POST"],
-        credentials: true
+        credentials: true,
+        allowedHeaders: ["Content-Type"]
     }
 });
 
