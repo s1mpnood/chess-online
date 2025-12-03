@@ -63,6 +63,13 @@ app.get('/test-cors', (req, res) => {
 const rooms = new Map();
 // Hàng đợi matchmaking
 const matchmakingQueue = [];
+// Lưu timeout timers
+const queueTimeouts = new Map();
+
+// Broadcast số người đang chờ cho tất cả clients
+function broadcastQueueCount() {
+    io.emit('queue_update', { count: matchmakingQueue.length });
+}
 
 // Socket.IO connection
 io.on('connection', (socket) => {
@@ -73,10 +80,23 @@ io.on('connection', (socket) => {
         const { player_name } = data;
         console.log('🔍 Finding match for:', player_name);
         
+        // Xóa khỏi queue cũ nếu đang chờ (tránh duplicate)
+        const oldIndex = matchmakingQueue.findIndex(p => p.socket_id === socket.id);
+        if (oldIndex !== -1) {
+            const oldTimeout = queueTimeouts.get(socket.id);
+            if (oldTimeout) clearTimeout(oldTimeout);
+            matchmakingQueue.splice(oldIndex, 1);
+        }
+        
         // Kiểm tra xem có ai đang chờ không
         if (matchmakingQueue.length > 0) {
-            // Lấy người đầu tiên trong hàng đợi
+            // Lấy người đầu tiên và xóa timeout của họ
             const opponent = matchmakingQueue.shift();
+            const opponentTimeout = queueTimeouts.get(opponent.socket_id);
+            if (opponentTimeout) {
+                clearTimeout(opponentTimeout);
+                queueTimeouts.delete(opponent.socket_id);
+            }
             
             // Tạo room ID ngẫu nhiên
             const room_id = `random_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -122,6 +142,9 @@ io.on('connection', (socket) => {
             });
             
             console.log(`✅ Match created: ${opponent.player_name} vs ${player_name} in room ${room_id}`);
+            
+            // Broadcast queue count update
+            broadcastQueueCount();
         } else {
             // Thêm vào hàng đợi
             matchmakingQueue.push({
@@ -136,6 +159,25 @@ io.on('connection', (socket) => {
                 queue_position: matchmakingQueue.length
             });
             
+            // Broadcast queue count to all
+            broadcastQueueCount();
+            
+            // Set timeout 2 phút - tự động hủy nếu không tìm được
+            const timeout = setTimeout(() => {
+                const index = matchmakingQueue.findIndex(p => p.socket_id === socket.id);
+                if (index !== -1) {
+                    matchmakingQueue.splice(index, 1);
+                    socket.emit('matchmaking_timeout', {
+                        message: 'Không tìm thấy đối thủ. Vui lòng thử lại!'
+                    });
+                    queueTimeouts.delete(socket.id);
+                    broadcastQueueCount();
+                    console.log(`⏱️ ${player_name} timed out from queue`);
+                }
+            }, 120000); // 2 phút = 120000ms
+            
+            queueTimeouts.set(socket.id, timeout);
+            
             console.log(`⏳ ${player_name} added to queue. Queue size: ${matchmakingQueue.length}`);
         }
     });
@@ -145,6 +187,19 @@ io.on('connection', (socket) => {
         const index = matchmakingQueue.findIndex(p => p.socket_id === socket.id);
         if (index !== -1) {
             matchmakingQueue.splice(index, 1);
+            
+            // Clear timeout
+            const timeout = queueTimeouts.get(socket.id);
+            if (timeout) {
+                clearTimeout(timeout);
+                queueTimeouts.delete(socket.id);
+            }
+            
+            socket.emit('matchmaking_cancelled', {
+                message: 'Đã hủy tìm trận'
+            });
+            
+            broadcastQueueCount();
             console.log(`❌ Player removed from queue. Queue size: ${matchmakingQueue.length}`);
         }
     });

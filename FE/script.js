@@ -81,6 +81,29 @@ if (socket) {
         updateMatchmakingStatus('🔍 Đang tìm đối thủ...');
     });
     
+    // Cập nhật số người đang chờ
+    socket.on('queue_update', (data) => {
+        console.log('📊 Queue update:', data.count);
+        const queueCount = document.getElementById('queueCount');
+        if (queueCount) {
+            queueCount.textContent = `${data.count} người đang chờ`;
+        }
+    });
+    
+    // Timeout tìm trận
+    socket.on('matchmaking_timeout', (data) => {
+        console.log('⏱️ Matchmaking timeout:', data);
+        hideMatchmakingScreen();
+        showMessage(data.message, 'warning', 'matchmakingTimeout');
+    });
+    
+    // Hủy tìm trận thành công
+    socket.on('matchmaking_cancelled', (data) => {
+        console.log('❌ Matchmaking cancelled:', data);
+        hideMatchmakingScreen();
+        showMessage(data.message, 'info', 'matchmakingCancelled');
+    });
+    
     socket.on('match_found', (data) => {
         console.log('✅ Match found!', data);
         currentRoomId = data.room_id;
@@ -383,8 +406,9 @@ function showMatchmakingScreen() {
         <div class="matchmaking-container">
             <div class="matchmaking-spinner"></div>
             <h2 id="matchmakingStatus">🔍 Đang tìm đối thủ...</h2>
-            <p>Vui lòng đợi trong giây lát</p>
-            <button class="btn-control" onclick="cancelMatchmaking()">Hủy</button>
+            <p id="queueCount">Khởi tạo...</p>
+            <p style="color: #888; font-size: 0.9em; margin-top: 10px;">Tự động hủy sau 2 phút</p>
+            <button class="btn-control" onclick="cancelMatchmaking()" style="margin-top: 20px;">❌ Hủy tìm trận</button>
         </div>
     `;
     document.body.appendChild(overlay);
