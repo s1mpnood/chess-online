@@ -111,14 +111,14 @@ io.on('connection', (socket) => {
             
             rooms.set(room_id, {
                 players: [
-                    { id: opponent.socket_id, name: opponent.player_name, color: player1Color },
-                    { id: socket.id, name: player_name, color: player2Color }
+                    { socket_id: opponent.socket_id, name: opponent.player_name, color: player1Color },
+                    { socket_id: socket.id, name: player_name, color: player2Color }
                 ],
                 game: game,
                 game_state: {
-                    board: game.board(),
-                    turn: game.turn(),
-                    fen: game.fen()
+                    fen: game.fen(),
+                    turn: 'white',
+                    moves_history: []
                 }
             });
             
