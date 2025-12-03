@@ -1197,28 +1197,38 @@ function promotePieceLocal(type) {
     if (!pendingPromotionMove) return;
     
     const code = type === 'knight' ? 'n' : type.charAt(0);
-    const move = game.move({
-        from: pendingPromotionMove.from,
-        to: pendingPromotionMove.to,
-        promotion: code
-    });
-
+    
     document.getElementById('promotion-modal-local').classList.remove('active');
+    const from = pendingPromotionMove.from;
+    const to = pendingPromotionMove.to;
     pendingPromotionMove = null;
     selectedSquare = null;
     
-    // Nếu đang chơi online, gửi move lên server
-    if (currentRoomId && socket && move) {
-        console.log('📤 Sending promotion move to server:', move.from, '→', move.to, 'promotion:', code);
+    // Nếu đang chơi online (random match), gửi lên server giống như attemptMove
+    if (currentRoomId && socket) {
+        console.log('📤 Sending promotion move to server:', from, '→', to, 'promotion:', code);
+        
+        // Test move trước (client-side validation)
+        const testGame = new Chess(game.fen());
+        const testMove = testGame.move({ from, to, promotion: code });
+        
+        if (!testMove) {
+            showMessageLocal('Nước đi không hợp lệ!', 'error');
+            renderBoardLocal();
+            return;
+        }
+        
+        // Gửi lên server - KHÔNG update local game
         socket.emit('make_move', {
             room_id: currentRoomId,
-            from: move.from,
-            to: move.to,
+            from: from,
+            to: to,
             promotion: code
         });
-        // Không render ngay - đợi server broadcast
+        // Đợi server broadcast về rồi mới render
     } else {
-        // Chỉ render local nếu không phải online mode
+        // Chỉ update local nếu không phải online mode
+        game.move({ from, to, promotion: code });
         renderBoardLocal();
         checkGameOverLocal();
         updateTimerDisplay();
