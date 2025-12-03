@@ -40,6 +40,11 @@ function updateUserRanking(username, points, result) {
     else if (result === 'draw') rankings[username].draws++;
     
     saveRankingData(rankings);
+    
+    // Gửi lên server để sync với mọi người
+    if (socket) {
+        socket.emit('update_ranking', { username, points, result });
+    }
 }
 
 function calculatePoints(gameTimeSeconds, totalTimeSeconds, isWinner) {
@@ -68,13 +73,30 @@ function calculatePoints(gameTimeSeconds, totalTimeSeconds, isWinner) {
 }
 
 function showRanking() {
-    const rankings = getRankingData();
+    // Lấy rankings từ server
+    if (socket) {
+        socket.emit('get_rankings');
+        // Sẽ nhận response qua 'rankings_list' event
+    } else {
+        // Fallback to localStorage nếu không có server
+        displayRankings(getRankingData());
+    }
+    
+    document.getElementById('rankingModal').style.display = 'flex';
+}
+
+function displayRankings(rankingsData) {
     const rankingList = document.getElementById('rankingList');
     
-    // Chuyển object thành array và sort theo điểm
-    const sortedRankings = Object.entries(rankings)
-        .map(([username, stats]) => ({ username, ...stats }))
-        .sort((a, b) => b.points - a.points);
+    // Chuyển thành array (nếu là object) và sort theo điểm
+    let sortedRankings;
+    if (Array.isArray(rankingsData)) {
+        sortedRankings = rankingsData.sort((a, b) => b.points - a.points);
+    } else {
+        sortedRankings = Object.entries(rankingsData)
+            .map(([username, stats]) => ({ username, ...stats }))
+            .sort((a, b) => b.points - a.points);
+    }
     
     if (sortedRankings.length === 0) {
         rankingList.innerHTML = '<p style="text-align:center; color:#888;">Chưa có dữ liệu xếp hạng.</p>';
@@ -105,8 +127,6 @@ function showRanking() {
         html += '</tbody></table>';
         rankingList.innerHTML = html;
     }
-    
-    document.getElementById('rankingModal').style.display = 'flex';
 }
 
 function closeRanking() {
@@ -335,6 +355,11 @@ if (socket) {
         isSurrendered = true; // Đánh dấu có surrender
         stopTimer();
         alert(`🏳️ ${data.message}\n\n⚠️ Trận này không tính điểm xếp hạng.`);
+    });
+    
+    // Nhận bảng xếp hạng từ server
+    socket.on('rankings_list', (rankingsArray) => {
+        displayRankings(rankingsArray);
     });
 } else {
     console.error('❌ Socket.IO không được khởi tạo - Chưa cấu hình backend URL!');

@@ -65,6 +65,8 @@ const rooms = new Map();
 const matchmakingQueue = [];
 // Lưu timeout timers
 const queueTimeouts = new Map();
+// Ranking database (server-side)
+const rankings = new Map(); // username -> { points, wins, losses, draws }
 
 // Broadcast số người đang chờ cho tất cả clients
 function broadcastQueueCount() {
@@ -378,6 +380,40 @@ io.on('connection', (socket) => {
         });
         
         console.log(`🏳️ ${player_name} surrendered in room ${room_id}`);
+    });
+    
+    // Update ranking
+    socket.on('update_ranking', (data) => {
+        const { username, points, result } = data;
+        
+        if (!rankings.has(username)) {
+            rankings.set(username, { points: 0, wins: 0, losses: 0, draws: 0 });
+        }
+        
+        const userRanking = rankings.get(username);
+        userRanking.points = Math.max(0, userRanking.points + points);
+        
+        if (result === 'win') userRanking.wins++;
+        else if (result === 'loss') userRanking.losses++;
+        else if (result === 'draw') userRanking.draws++;
+        
+        console.log(`📊 Updated ranking for ${username}: ${userRanking.points} points`);
+        
+        // Broadcast ranking update to all clients
+        io.emit('ranking_updated', {
+            username: username,
+            ranking: userRanking
+        });
+    });
+    
+    // Get all rankings
+    socket.on('get_rankings', () => {
+        const rankingsArray = Array.from(rankings.entries()).map(([username, stats]) => ({
+            username,
+            ...stats
+        }));
+        
+        socket.emit('rankings_list', rankingsArray);
     });
 
     // Disconnect
