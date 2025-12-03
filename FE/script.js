@@ -126,18 +126,21 @@ if (socket) {
     
     // Nhận nước đi từ đối thủ (cho chế độ random)
     socket.on('move_made', (data) => {
-        console.log('📨 Received move from opponent:', data);
+        console.log('📨 Received move_made event:', data);
         
-        // Áp dụng nước đi vào game local
-        const moveObj = { from: data.from, to: data.to };
-        if (data.promotion) moveObj.promotion = data.promotion;
-        
-        game.move(moveObj);
-        selectedSquare = null;
-        renderBoardLocal();
-        checkGameOverLocal();
-        
-        showMessageLocal(`📨 Đối thủ đã đi: ${data.from} → ${data.to}`, 'info');
+        // Đồng bộ game state từ server (chính xác nhất)
+        if (data.game_state && data.game_state.fen) {
+            const currentFen = game.fen();
+            
+            // Chỉ update nếu FEN khác (tránh update 2 lần)
+            if (currentFen !== data.game_state.fen) {
+                game.load(data.game_state.fen);
+                selectedSquare = null;
+                renderBoardLocal();
+                checkGameOverLocal();
+                showMessageLocal(`📨 Đối thủ đã đi: ${data.from} → ${data.to}`, 'info');
+            }
+        }
     });
     
     socket.on('game_over', (data) => {
