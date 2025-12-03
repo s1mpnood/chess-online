@@ -165,22 +165,20 @@ if (socket) {
             console.log('📊 Current FEN:', currentFen);
             console.log('📊 Server FEN:', data.game_state.fen);
             
-            // LUÔN sync từ server để đảm bảo đồng bộ
-            if (currentFen !== data.game_state.fen) {
-                console.log('🔄 Syncing board from server');
-                game.load(data.game_state.fen);
-                selectedSquare = null;
-                renderBoardLocal();
-                updateStatusLocal();
-                checkGameOverLocal();
-                
-                // Chỉ hiển thị message nếu không phải nước đi của mình
-                const myName = currentUser ? currentUser.username : 'Bạn';
-                if (data.player_name !== myName) {
-                    showMessageLocal(`📨 ${data.player_name} đã đi: ${data.from} → ${data.to}`, 'info');
-                }
+            // LUÔN load FEN từ server để đảm bảo 100% đồng bộ
+            console.log('🔄 Syncing board from server');
+            game.load(data.game_state.fen);
+            selectedSquare = null;
+            renderBoardLocal();
+            updateStatusLocal();
+            checkGameOverLocal();
+            
+            // Chỉ hiển thị message nếu không phải nước đi của mình
+            const myName = currentUser ? currentUser.username : 'Bạn';
+            if (data.player_name !== myName) {
+                showMessageLocal(`📨 ${data.player_name} đã đi: ${data.from} → ${data.to}`, 'info');
             } else {
-                console.log('✅ Board already synced');
+                console.log('✅ Rendered my own move from server broadcast');
             }
         }
     });
