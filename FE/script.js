@@ -150,6 +150,8 @@ if (socket) {
     // Nhận nước đi từ đối thủ (cho chế độ random)
     socket.on('move_made', (data) => {
         console.log('📨 Received move_made event:', data);
+        console.log('🎮 Current room:', currentRoomId);
+        console.log('🎨 My color:', currentPlayerColor);
         
         // Đảm bảo game đã được khởi tạo
         if (!game) {
@@ -160,15 +162,23 @@ if (socket) {
         // Đồng bộ game state từ server (chính xác nhất)
         if (data.game_state && data.game_state.fen) {
             const currentFen = game.fen();
+            console.log('📊 Current FEN:', currentFen);
+            console.log('📊 Server FEN:', data.game_state.fen);
             
-            // Chỉ update nếu FEN khác (tránh update 2 lần)
+            // LUÔN sync từ server để đảm bảo đồng bộ
             if (currentFen !== data.game_state.fen) {
-                console.log('🔄 Syncing board: ' + currentFen + ' → ' + data.game_state.fen);
+                console.log('🔄 Syncing board from server');
                 game.load(data.game_state.fen);
                 selectedSquare = null;
                 renderBoardLocal();
+                updateStatusLocal();
                 checkGameOverLocal();
-                showMessageLocal(`📨 Đối thủ đã đi: ${data.from} → ${data.to}`, 'info');
+                
+                // Chỉ hiển thị message nếu không phải nước đi của mình
+                const myName = currentUser ? currentUser.username : 'Bạn';
+                if (data.player_name !== myName) {
+                    showMessageLocal(`📨 ${data.player_name} đã đi: ${data.from} → ${data.to}`, 'info');
+                }
             } else {
                 console.log('✅ Board already synced');
             }
@@ -1157,17 +1167,21 @@ function onSquareClickLocal(clickedSquare) {
 
         if (move) {
             selectedSquare = null;
-            renderBoardLocal();
-            checkGameOverLocal();
             
             // Nếu đang chơi random, gửi nước đi lên server
             if (currentRoomId && socket) {
+                console.log('📤 Sending move to server:', move.from, '→', move.to);
                 socket.emit('make_move', {
                     room_id: currentRoomId,
                     from: move.from,
                     to: move.to,
                     promotion: move.promotion
                 });
+                // Không render ngay - đợi server broadcast lại để đồng bộ
+            } else {
+                // Chỉ render local nếu không phải online mode
+                renderBoardLocal();
+                checkGameOverLocal();
             }
         } else {
             const p = game.get(clickedSquare);
