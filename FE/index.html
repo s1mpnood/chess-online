@@ -76,8 +76,8 @@
             <p>Chọn chế độ chơi</p>
             <div class="mode-buttons">
                 <button class="mode-btn" onclick="selectMode('local')">
-                    <span class="mode-icon">👥</span>
-                    <h3>Chơi Online</h3>
+                    <span class="mode-icon">🎲</span>
+                    <h3>Chơi Random</h3>
                 </button>
                 <button class="mode-btn" onclick="selectMode('ai')">
                     <span class="mode-icon">🤖</span>
@@ -255,18 +255,22 @@
         <!-- Local Game Container -->
         <div class="local-game-container" id="localGameContainer" style="display:none;">
             <div class="board-header">
-                <h2> Cờ Vua - Chơi với Người</h2>
+                <h2>🎲 Cờ Vua - Chơi Random</h2>
                 <button class="btn-back" onclick="backToMenu()">← Quay lại</button>
             </div>
 
             <div class="game-status-local">
                 <div class="status-item">
+                    <label>♔ Trắng</label>
+                    <span id="timer-white" class="timer-active">10:00</span>
+                </div>
+                <div class="status-item">
                     <label>Lượt chơi</label>
                     <span id="game-status-local">♔ Trắng</span>
                 </div>
                 <div class="status-item">
-                    <label> Thời gian</label>
-                    <span id="timer-display">05:00</span>
+                    <label>♚ Đen</label>
+                    <span id="timer-black">10:00</span>
                 </div>
             </div>
 

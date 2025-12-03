@@ -2,8 +2,12 @@
 let gameMode = null; // 'local' hoặc 'online'
 let game = null; // Chess.js instance cho chế độ local
 let selectedSquare = null;
-let timer = 600;
+
+// Separate timers for each player
+let timerWhite = 600; // 10 minutes in seconds
+let timerBlack = 600; // 10 minutes in seconds
 let timerInterval = null;
+
 let pendingPromotionMove = null;
 let currentUser = null; // Thông tin user đăng nhập
 
@@ -240,6 +244,8 @@ function selectMode(mode) {
         document.getElementById('localGameContainer').style.display = 'block';
         renderBoardLocal();
         updateTimerDisplay();
+        // Auto-start timer when game begins
+        startTimer();
     } else if (mode === 'ai') {
         // Khởi tạo Chess.js cho chế độ AI
         gameAI = new Chess();
@@ -1016,6 +1022,7 @@ function promotePieceLocal(type) {
     selectedSquare = null;
     renderBoardLocal();
     checkGameOverLocal();
+    updateTimerDisplay(); // Update timer highlight after move
 }
 
 function checkGameOverLocal() {
@@ -1030,14 +1037,16 @@ function checkGameOverLocal() {
     } else if (game.in_check()) {
         showMessageLocal('⚠️ Chiếu!', 'warning');
     }
+    updateTimerDisplay(); // Update timer highlight
 }
 
 function updateStatusLocal() {
     const statusEl = document.getElementById('game-status-local');
     if (statusEl) {
         const turn = game.turn() === 'w' ? '♔ Trắng' : '♚ Đen';
-        statusEl.textContent = `Lượt: ${turn}`;
+        statusEl.textContent = turn;
     }
+    updateTimerDisplay(); // Update timer highlight when turn changes
 }
 
 function showMessageLocal(message, type) {
@@ -1073,16 +1082,42 @@ function resignGame() {
     }
 }
 
-// Timer functions
+// Timer functions - Separate for each player
 function startTimer() {
     if (timerInterval) return;
+    
     timerInterval = setInterval(() => {
-        timer--;
-        updateTimerDisplay();
-        if (timer <= 0) {
-            stopTimer();
-            alert('Hết giờ!');
+        // Get current turn
+        const currentTurn = game.turn(); // 'w' or 'b'
+        
+        // Decrement timer for current player
+        if (currentTurn === 'w') {
+            timerWhite--;
+            if (timerWhite <= 0) {
+                stopTimer();
+                showMessageLocal('⏰ Hết giờ! Đen thắng!', 'error');
+                setTimeout(() => {
+                    if (confirm('Chơi lại?')) {
+                        resetGameLocal();
+                    }
+                }, 1000);
+                return;
+            }
+        } else {
+            timerBlack--;
+            if (timerBlack <= 0) {
+                stopTimer();
+                showMessageLocal('⏰ Hết giờ! Trắng thắng!', 'error');
+                setTimeout(() => {
+                    if (confirm('Chơi lại?')) {
+                        resetGameLocal();
+                    }
+                }, 1000);
+                return;
+            }
         }
+        
+        updateTimerDisplay();
     }, 1000);
 }
 
@@ -1093,16 +1128,38 @@ function stopTimer() {
 
 function resetTimer() {
     stopTimer();
-    timer = 600;
+    timerWhite = 600;
+    timerBlack = 600;
     updateTimerDisplay();
 }
 
 function updateTimerDisplay() {
-    const m = Math.floor(timer / 60);
-    const s = timer % 60;
-    const display = document.getElementById('timer-display');
-    if (display) {
-        display.textContent = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    // Update white timer
+    const mWhite = Math.floor(timerWhite / 60);
+    const sWhite = timerWhite % 60;
+    const displayWhite = document.getElementById('timer-white');
+    if (displayWhite) {
+        displayWhite.textContent = `${mWhite.toString().padStart(2, '0')}:${sWhite.toString().padStart(2, '0')}`;
+    }
+    
+    // Update black timer
+    const mBlack = Math.floor(timerBlack / 60);
+    const sBlack = timerBlack % 60;
+    const displayBlack = document.getElementById('timer-black');
+    if (displayBlack) {
+        displayBlack.textContent = `${mBlack.toString().padStart(2, '0')}:${sBlack.toString().padStart(2, '0')}`;
+    }
+    
+    // Highlight active timer
+    const currentTurn = game.turn();
+    if (displayWhite && displayBlack) {
+        if (currentTurn === 'w') {
+            displayWhite.classList.add('timer-active');
+            displayBlack.classList.remove('timer-active');
+        } else {
+            displayBlack.classList.add('timer-active');
+            displayWhite.classList.remove('timer-active');
+        }
     }
 }
 

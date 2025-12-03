@@ -797,6 +797,23 @@ body {
     font-weight: bold;
 }
 
+/* Timer styling */
+.timer-active {
+    color: #667eea !important;
+    font-size: 20px !important;
+    font-weight: bold !important;
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
 .status-item.active span {
     color: #667eea;
     font-size: 18px;
