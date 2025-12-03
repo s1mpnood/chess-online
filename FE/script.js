@@ -1059,6 +1059,20 @@ function resetGameLocal() {
     }
 }
 
+function resignGame() {
+    const currentTurn = game.turn() === 'w' ? 'Trắng' : 'Đen';
+    if (confirm(`Bạn có chắc chắn muốn đầu hàng?\n${currentTurn} sẽ thua!`)) {
+        const winner = game.turn() === 'w' ? 'Đen' : 'Trắng';
+        stopTimer();
+        showMessageLocal(`🏳️ ${currentTurn} đã đầu hàng! ${winner} thắng!`, 'info');
+        setTimeout(() => {
+            if (confirm('Chơi lại?')) {
+                resetGameLocal();
+            }
+        }, 1000);
+    }
+}
+
 // Timer functions
 function startTimer() {
     if (timerInterval) return;
