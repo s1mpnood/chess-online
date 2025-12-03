@@ -36,9 +36,12 @@ const BACKEND_URL = (() => {
 
 // Chỉ khởi tạo socket nếu có BACKEND_URL
 const socket = BACKEND_URL ? io(BACKEND_URL, {
+    transports: ['websocket', 'polling'], // Ưu tiên websocket
     reconnection: true,
     reconnectionAttempts: 5,
-    reconnectionDelay: 1000
+    reconnectionDelay: 1000,
+    upgrade: true,
+    rememberUpgrade: true
 }) : null;
 
 // Debug connection

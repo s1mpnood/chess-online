@@ -39,6 +39,26 @@ const io = socketIo(server, {
 // Serve static files từ thư mục FE
 app.use(express.static(path.join(__dirname, '../FE')));
 
+// Health check endpoint
+app.get('/health', (req, res) => {
+    res.json({ 
+        status: 'OK', 
+        message: 'Backend is running',
+        cors: {
+            origin: req.headers.origin,
+            allowed: true
+        }
+    });
+});
+
+// CORS test endpoint
+app.get('/test-cors', (req, res) => {
+    res.json({ 
+        message: 'CORS working!',
+        origin: req.headers.origin 
+    });
+});
+
 // Lưu trữ thông tin các phòng
 const rooms = new Map();
 
