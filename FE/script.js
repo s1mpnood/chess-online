@@ -1197,7 +1197,7 @@ function promotePieceLocal(type) {
     if (!pendingPromotionMove) return;
     
     const code = type === 'knight' ? 'n' : type.charAt(0);
-    game.move({
+    const move = game.move({
         from: pendingPromotionMove.from,
         to: pendingPromotionMove.to,
         promotion: code
@@ -1206,9 +1206,23 @@ function promotePieceLocal(type) {
     document.getElementById('promotion-modal-local').classList.remove('active');
     pendingPromotionMove = null;
     selectedSquare = null;
-    renderBoardLocal();
-    checkGameOverLocal();
-    updateTimerDisplay(); // Update timer highlight after move
+    
+    // Nếu đang chơi online, gửi move lên server
+    if (currentRoomId && socket && move) {
+        console.log('📤 Sending promotion move to server:', move.from, '→', move.to, 'promotion:', code);
+        socket.emit('make_move', {
+            room_id: currentRoomId,
+            from: move.from,
+            to: move.to,
+            promotion: code
+        });
+        // Không render ngay - đợi server broadcast
+    } else {
+        // Chỉ render local nếu không phải online mode
+        renderBoardLocal();
+        checkGameOverLocal();
+        updateTimerDisplay();
+    }
 }
 
 function checkGameOverLocal() {
