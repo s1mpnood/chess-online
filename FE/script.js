@@ -93,6 +93,18 @@ if (socket) {
         hideMatchmakingScreen();
         document.getElementById('localGameContainer').style.display = 'block';
         
+        // Set tên người chơi
+        const myName = currentUser ? currentUser.username : 'Bạn';
+        const opponentName = data.opponent_name;
+        
+        if (data.your_color === 'white') {
+            document.getElementById('white-player-label').textContent = `♔ ${myName}`;
+            document.getElementById('black-player-label').textContent = `♚ ${opponentName}`;
+        } else {
+            document.getElementById('white-player-label').textContent = `♔ ${opponentName}`;
+            document.getElementById('black-player-label').textContent = `♚ ${myName}`;
+        }
+        
         // Update UI
         renderBoardLocal();
         updateTimerDisplay();
@@ -110,6 +122,27 @@ if (socket) {
         stopTimer();
         alert('⚠️ ' + data.message);
         location.reload();
+    });
+    
+    // Nhận nước đi từ đối thủ (cho chế độ random)
+    socket.on('move_made', (data) => {
+        console.log('📨 Received move from opponent:', data);
+        
+        // Áp dụng nước đi vào game local
+        const moveObj = { from: data.from, to: data.to };
+        if (data.promotion) moveObj.promotion = data.promotion;
+        
+        game.move(moveObj);
+        selectedSquare = null;
+        renderBoardLocal();
+        checkGameOverLocal();
+        
+        showMessageLocal(`📨 Đối thủ đã đi: ${data.from} → ${data.to}`, 'info');
+    });
+    
+    socket.on('game_over', (data) => {
+        stopTimer();
+        alert('🏁 ' + data.result);
     });
 } else {
     console.error('❌ Socket.IO không được khởi tạo - Chưa cấu hình backend URL!');
@@ -1046,6 +1079,15 @@ function renderBoardLocal() {
 }
 
 function onSquareClickLocal(clickedSquare) {
+    // Nếu đang chơi random matchmaking, kiểm tra lượt
+    if (currentRoomId && currentPlayerColor) {
+        const currentTurn = game.turn() === 'w' ? 'white' : 'black';
+        if (currentPlayerColor !== currentTurn) {
+            showMessageLocal('⏳ Chưa đến lượt bạn!', 'warning');
+            return;
+        }
+    }
+    
     if (!selectedSquare) {
         const piece = game.get(clickedSquare);
         if (piece && piece.color === game.turn()) {
@@ -1081,6 +1123,16 @@ function onSquareClickLocal(clickedSquare) {
             selectedSquare = null;
             renderBoardLocal();
             checkGameOverLocal();
+            
+            // Nếu đang chơi random, gửi nước đi lên server
+            if (currentRoomId && socket) {
+                socket.emit('make_move', {
+                    room_id: currentRoomId,
+                    from: move.from,
+                    to: move.to,
+                    promotion: move.promotion
+                });
+            }
         } else {
             const p = game.get(clickedSquare);
             if (p && p.color === game.turn()) selectedSquare = clickedSquare;
