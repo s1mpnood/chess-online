@@ -128,17 +128,26 @@ if (socket) {
     socket.on('move_made', (data) => {
         console.log('📨 Received move_made event:', data);
         
+        // Đảm bảo game đã được khởi tạo
+        if (!game) {
+            console.error('❌ Game not initialized!');
+            return;
+        }
+        
         // Đồng bộ game state từ server (chính xác nhất)
         if (data.game_state && data.game_state.fen) {
             const currentFen = game.fen();
             
             // Chỉ update nếu FEN khác (tránh update 2 lần)
             if (currentFen !== data.game_state.fen) {
+                console.log('🔄 Syncing board: ' + currentFen + ' → ' + data.game_state.fen);
                 game.load(data.game_state.fen);
                 selectedSquare = null;
                 renderBoardLocal();
                 checkGameOverLocal();
                 showMessageLocal(`📨 Đối thủ đã đi: ${data.from} → ${data.to}`, 'info');
+            } else {
+                console.log('✅ Board already synced');
             }
         }
     });
