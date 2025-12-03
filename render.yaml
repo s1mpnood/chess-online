@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: chess-backend
+    env: node
+    region: singapore
+    plan: free
+    buildCommand: cd BE && npm install
+    startCommand: cd BE && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
