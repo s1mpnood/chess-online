@@ -18,8 +18,8 @@ const BACKEND_URL = (() => {
         return 'http://localhost:5000';
     }
     
-    // TODO: Sau khi deploy backend, thay URL này
-    const PRODUCTION_BACKEND = 'https://YOUR_BACKEND_URL.onrender.com';
+    // Backend URL từ Render
+    const PRODUCTION_BACKEND = 'https://chess-backend-liot.onrender.com';
     
     // Kiểm tra xem đã deploy backend chưa
     if (PRODUCTION_BACKEND.includes('YOUR_BACKEND_URL')) {
