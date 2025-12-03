@@ -74,6 +74,43 @@ if (socket) {
     socket.on('error', (error) => {
         console.error('❌ Socket error:', error);
     });
+    
+    // Matchmaking events
+    socket.on('waiting_for_opponent', (data) => {
+        console.log('⏳ Waiting for opponent...', data);
+        updateMatchmakingStatus('🔍 Đang tìm đối thủ...');
+    });
+    
+    socket.on('match_found', (data) => {
+        console.log('✅ Match found!', data);
+        currentRoomId = data.room_id;
+        currentPlayerColor = data.your_color;
+        
+        // Khởi tạo game với trạng thái từ server
+        game = new Chess(data.game_state.fen);
+        
+        // Hiển thị game container
+        hideMatchmakingScreen();
+        document.getElementById('localGameContainer').style.display = 'block';
+        
+        // Update UI
+        renderBoardLocal();
+        updateTimerDisplay();
+        updateStatusLocal();
+        
+        // Hiển thị thông tin
+        showMessageLocal(`🎮 Đã ghép trận! Bạn chơi ${data.your_color === 'white' ? 'Trắng ♔' : 'Đen ♚'}`, 'success');
+        showMessageLocal(`⚔️ Đối thủ: ${data.opponent_name}`, 'info');
+        
+        // Start timer
+        startTimer();
+    });
+    
+    socket.on('opponent_disconnected', (data) => {
+        stopTimer();
+        alert('⚠️ ' + data.message);
+        location.reload();
+    });
 } else {
     console.error('❌ Socket.IO không được khởi tạo - Chưa cấu hình backend URL!');
 }
@@ -239,13 +276,20 @@ function selectMode(mode) {
     document.getElementById('modeSelection').style.display = 'none';
     
     if (mode === 'local') {
-        // Khởi tạo Chess.js cho chế độ local
-        game = new Chess();
-        document.getElementById('localGameContainer').style.display = 'block';
-        renderBoardLocal();
-        updateTimerDisplay();
-        // Auto-start timer when game begins
-        startTimer();
+        // Chế độ Random Matchmaking
+        if (!socket) {
+            alert('❌ CHƯA CẤU HÌNH BACKEND!\n\nChế độ Random cần kết nối server để tìm đối thủ.');
+            location.reload();
+            return;
+        }
+        
+        // Hiển thị loading và tìm đối thủ
+        showMatchmakingScreen();
+        
+        // Gửi yêu cầu tìm trận
+        const playerName = currentUser ? currentUser.username : 'Khách';
+        socket.emit('find_match', { player_name: playerName });
+        
     } else if (mode === 'ai') {
         // Khởi tạo Chess.js cho chế độ AI
         gameAI = new Chess();
@@ -278,6 +322,48 @@ function selectMode(mode) {
 }
 
 function backToMenu() {
+    // Cancel matchmaking if waiting
+    if (socket && gameMode === 'local') {
+        socket.emit('cancel_matchmaking');
+    }
+    location.reload();
+}
+
+// Matchmaking UI functions
+function showMatchmakingScreen() {
+    // Create matchmaking overlay
+    const overlay = document.createElement('div');
+    overlay.id = 'matchmakingOverlay';
+    overlay.innerHTML = `
+        <div class="matchmaking-container">
+            <div class="matchmaking-spinner"></div>
+            <h2 id="matchmakingStatus">🔍 Đang tìm đối thủ...</h2>
+            <p>Vui lòng đợi trong giây lát</p>
+            <button class="btn-control" onclick="cancelMatchmaking()">Hủy</button>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+}
+
+function hideMatchmakingScreen() {
+    const overlay = document.getElementById('matchmakingOverlay');
+    if (overlay) {
+        overlay.remove();
+    }
+}
+
+function updateMatchmakingStatus(message) {
+    const statusEl = document.getElementById('matchmakingStatus');
+    if (statusEl) {
+        statusEl.textContent = message;
+    }
+}
+
+function cancelMatchmaking() {
+    if (socket) {
+        socket.emit('cancel_matchmaking');
+    }
+    hideMatchmakingScreen();
     location.reload();
 }
 

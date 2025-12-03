@@ -61,12 +61,95 @@ app.get('/test-cors', (req, res) => {
 
 // Lưu trữ thông tin các phòng
 const rooms = new Map();
+// Hàng đợi matchmaking
+const matchmakingQueue = [];
 
 // Socket.IO connection
 io.on('connection', (socket) => {
     console.log('🟢 User connected:', socket.id);
 
-    // Tạo/Vào phòng
+    // Random matchmaking - Tự động ghép đôi
+    socket.on('find_match', (data) => {
+        const { player_name } = data;
+        console.log('🔍 Finding match for:', player_name);
+        
+        // Kiểm tra xem có ai đang chờ không
+        if (matchmakingQueue.length > 0) {
+            // Lấy người đầu tiên trong hàng đợi
+            const opponent = matchmakingQueue.shift();
+            
+            // Tạo room ID ngẫu nhiên
+            const room_id = `random_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            
+            // Tạo phòng mới
+            const game = new Chess();
+            
+            // Random xem ai chơi trắng, ai chơi đen
+            const isWhite = Math.random() < 0.5;
+            const player1Color = isWhite ? 'white' : 'black';
+            const player2Color = isWhite ? 'black' : 'white';
+            
+            rooms.set(room_id, {
+                players: [
+                    { id: opponent.socket_id, name: opponent.player_name, color: player1Color },
+                    { id: socket.id, name: player_name, color: player2Color }
+                ],
+                game: game,
+                game_state: {
+                    board: game.board(),
+                    turn: game.turn(),
+                    fen: game.fen()
+                }
+            });
+            
+            // Join cả 2 vào room
+            opponent.socket.join(room_id);
+            socket.join(room_id);
+            
+            // Thông báo cho cả 2
+            opponent.socket.emit('match_found', {
+                room_id: room_id,
+                your_color: player1Color,
+                opponent_name: player_name,
+                game_state: rooms.get(room_id).game_state
+            });
+            
+            socket.emit('match_found', {
+                room_id: room_id,
+                your_color: player2Color,
+                opponent_name: opponent.player_name,
+                game_state: rooms.get(room_id).game_state
+            });
+            
+            console.log(`✅ Match created: ${opponent.player_name} vs ${player_name} in room ${room_id}`);
+        } else {
+            // Thêm vào hàng đợi
+            matchmakingQueue.push({
+                socket_id: socket.id,
+                socket: socket,
+                player_name: player_name,
+                timestamp: Date.now()
+            });
+            
+            socket.emit('waiting_for_opponent', {
+                message: 'Đang tìm đối thủ...',
+                queue_position: matchmakingQueue.length
+            });
+            
+            console.log(`⏳ ${player_name} added to queue. Queue size: ${matchmakingQueue.length}`);
+        }
+    });
+    
+    // Hủy tìm trận
+    socket.on('cancel_matchmaking', () => {
+        const index = matchmakingQueue.findIndex(p => p.socket_id === socket.id);
+        if (index !== -1) {
+            matchmakingQueue.splice(index, 1);
+            console.log(`❌ Player removed from queue. Queue size: ${matchmakingQueue.length}`);
+        }
+    });
+
+    // Tạo/Vào phòng (cho chế độ Tạo phòng)
     socket.on('join_room', (data) => {
         const { room_id, player_name } = data;
         
@@ -224,6 +307,25 @@ io.on('connection', (socket) => {
     // Disconnect
     socket.on('disconnect', () => {
         console.log('🔴 User disconnected:', socket.id);
+        
+        // Xóa khỏi hàng đợi matchmaking nếu có
+        const queueIndex = matchmakingQueue.findIndex(p => p.socket_id === socket.id);
+        if (queueIndex !== -1) {
+            matchmakingQueue.splice(queueIndex, 1);
+            console.log(`❌ Player removed from matchmaking queue`);
+        }
+        
+        // Thông báo đối thủ nếu đang trong game
+        for (const [room_id, room] of rooms.entries()) {
+            const playerIndex = room.players.findIndex(p => p.id === socket.id);
+            if (playerIndex !== -1) {
+                io.to(room_id).emit('opponent_disconnected', {
+                    message: 'Đối thủ đã ngắt kết nối'
+                });
+                console.log(`⚠️ Player disconnected from room ${room_id}`);
+                break;
+            }
+        }
 
         // Tìm và xóa player khỏi phòng
         for (const [room_id, room] of rooms.entries()) {
