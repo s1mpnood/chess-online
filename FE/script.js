@@ -8,12 +8,58 @@ let pendingPromotionMove = null;
 let currentUser = null; // Thông tin user đăng nhập
 
 // ==================== ONLINE MODE - VARIABLES ====================
-// Backend URL - Thay đổi URL này sau khi deploy backend lên Render/Railway
-const BACKEND_URL = window.location.hostname === 'localhost' 
-    ? 'http://localhost:5000' 
-    : 'https://YOUR_BACKEND_URL.onrender.com'; // Sửa URL này sau khi deploy BE
+// Backend URL Configuration
+// Nếu đang test local: dùng localhost:5000
+// Nếu đã deploy: thay YOUR_BACKEND_URL bằng URL từ Render/Railway
+const BACKEND_URL = (() => {
+    const hostname = window.location.hostname;
+    
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        return 'http://localhost:5000';
+    }
+    
+    // TODO: Sau khi deploy backend, thay URL này
+    const PRODUCTION_BACKEND = 'https://YOUR_BACKEND_URL.onrender.com';
+    
+    // Kiểm tra xem đã deploy backend chưa
+    if (PRODUCTION_BACKEND.includes('YOUR_BACKEND_URL')) {
+        console.warn('⚠️ CHƯA CẤU HÌNH BACKEND URL!');
+        console.warn('Vui lòng:');
+        console.warn('1. Deploy backend lên Render/Railway');
+        console.warn('2. Sửa PRODUCTION_BACKEND trong script.js');
+        console.warn('3. Push lại lên GitHub');
+        return null; // Không kết nối
+    }
+    
+    return PRODUCTION_BACKEND;
+})();
 
-const socket = io(BACKEND_URL);
+// Chỉ khởi tạo socket nếu có BACKEND_URL
+const socket = BACKEND_URL ? io(BACKEND_URL, {
+    reconnection: true,
+    reconnectionAttempts: 5,
+    reconnectionDelay: 1000
+}) : null;
+
+// Debug connection
+if (socket) {
+    socket.on('connect', () => {
+        console.log('✅ Connected to server!', socket.id);
+        showMessage('Đã kết nối đến máy chủ', 'success', 'loginSuccess');
+    });
+
+    socket.on('connect_error', (error) => {
+        console.error('❌ Connection error:', error);
+        showMessage('Không thể kết nối server! Kiểm tra backend đã chạy chưa.', 'error', 'loginError');
+    });
+
+    socket.on('disconnect', (reason) => {
+        console.log('🔴 Disconnected:', reason);
+    });
+} else {
+    console.error('❌ Socket.IO không được khởi tạo - Chưa cấu hình backend URL!');
+}
+
 let gameOnline = new Chess(); // Chess.js instance cho online mode
 let pendingPromotionMoveOnline = null;
 let gameState = null;
@@ -186,6 +232,22 @@ function selectMode(mode) {
         document.getElementById('aiGameContainer').style.display = 'block';
         document.getElementById('level-selection-modal').classList.add('active');
     } else if (mode === 'online') {
+        // Kiểm tra backend đã cấu hình chưa
+        if (!socket) {
+            alert('❌ CHƯA CẤU HÌNH BACKEND!\n\n' +
+                  'Chế độ Online cần backend server.\n\n' +
+                  'Để chơi Online:\n' +
+                  '1. Deploy backend lên Render/Railway\n' +
+                  '2. Sửa PRODUCTION_BACKEND trong script.js (dòng 23)\n' +
+                  '3. Push code lên GitHub\n\n' +
+                  'Hoặc test local:\n' +
+                  '1. Chạy: cd BE && npm start\n' +
+                  '2. Mở: http://localhost:5000\n\n' +
+                  'Xem chi tiết trong DEPLOY_GUIDE.md');
+            location.reload();
+            return;
+        }
+        
         // Hiển thị tên người chơi đã đăng nhập
         const onlineNameEl = document.getElementById('onlinePlayerName');
         if (onlineNameEl && currentUser) {
@@ -771,9 +833,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ==================== ONLINE MODE - SOCKET EVENTS ====================
 
-socket.on('connect', function() {
-    showMessage('Đã kết nối đến máy chủ', 'success', 'loginSuccess');
-});
+// Connect event đã được định nghĩa ở trên (dòng 16-28)
 
 socket.on('room_joined', function(data) {
     currentPlayerColor = data.player_color;
@@ -1022,6 +1082,11 @@ function updateTimerDisplay() {
 
 // Tạo phòng mới
 function createRoom() {
+    if (!socket) {
+        alert('❌ CHƯA CẤU HÌNH BACKEND!\n\nVui lòng:\n1. Deploy backend lên Render/Railway\n2. Sửa PRODUCTION_BACKEND trong script.js (dòng 23)\n3. Push code lên GitHub\n\nXem hướng dẫn trong DEPLOY_GUIDE.md');
+        return;
+    }
+    
     if (!currentUser) {
         showMessage('Vui lòng đăng nhập trước!', 'error', 'loginError');
         return;
@@ -1047,6 +1112,11 @@ function createRoom() {
 
 // Vào phòng có sẵn
 function joinRoom() {
+    if (!socket) {
+        alert('❌ CHƯA CẤU HÌNH BACKEND!\n\nVui lòng:\n1. Deploy backend lên Render/Railway\n2. Sửa PRODUCTION_BACKEND trong script.js (dòng 23)\n3. Push code lên GitHub\n\nXem hướng dẫn trong DEPLOY_GUIDE.md');
+        return;
+    }
+    
     if (!currentUser) {
         showMessage('Vui lòng đăng nhập trước!', 'error', 'loginError');
         return;
