@@ -262,6 +262,8 @@ io.on('connection', (socket) => {
         });
 
         console.log(`♟️  ${player.name} moved: ${from} → ${to}`);
+        console.log(`📡 Broadcasted to room ${room_id}: ${room.players.length} players`);
+        console.log(`📊 Game state FEN: ${room.game_state.fen}`);
 
         // Kiểm tra game over
         if (room.game.game_over()) {
