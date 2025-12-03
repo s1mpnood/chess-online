@@ -45,16 +45,27 @@ const socket = BACKEND_URL ? io(BACKEND_URL, {
 if (socket) {
     socket.on('connect', () => {
         console.log('✅ Connected to server!', socket.id);
+        console.log('🔗 Backend URL:', BACKEND_URL);
         showMessage('Đã kết nối đến máy chủ', 'success', 'loginSuccess');
     });
 
     socket.on('connect_error', (error) => {
         console.error('❌ Connection error:', error);
+        console.error('🔗 Trying to connect to:', BACKEND_URL);
         showMessage('Không thể kết nối server! Kiểm tra backend đã chạy chưa.', 'error', 'loginError');
     });
 
     socket.on('disconnect', (reason) => {
         console.log('🔴 Disconnected:', reason);
+        console.log('🔗 Backend URL was:', BACKEND_URL);
+        if (reason === 'io server disconnect') {
+            console.warn('⚠️ Server chủ động disconnect - Có thể do CORS hoặc authentication');
+            showMessage('Mất kết nối server! Đang thử kết nối lại...', 'warning', 'loginError');
+        }
+    });
+
+    socket.on('error', (error) => {
+        console.error('❌ Socket error:', error);
     });
 } else {
     console.error('❌ Socket.IO không được khởi tạo - Chưa cấu hình backend URL!');
