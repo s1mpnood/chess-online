@@ -2,7 +2,7 @@
 let gameMode = null; // 'local' hoặc 'online'
 let game = null; // Chess.js instance cho chế độ local
 let selectedSquare = null;
-let timer = 300;
+let timer = 600;
 let timerInterval = null;
 let pendingPromotionMove = null;
 let currentUser = null; // Thông tin user đăng nhập
@@ -1079,7 +1079,7 @@ function stopTimer() {
 
 function resetTimer() {
     stopTimer();
-    timer = 300;
+    timer = 600;
     updateTimerDisplay();
 }
 
