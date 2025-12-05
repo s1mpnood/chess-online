@@ -1069,25 +1069,113 @@ body {
     background: #333;
 }
 
-@media (max-width: 768px) {
-    .container {
-        flex-direction: column;
-    }
-
+/* ==================== RESPONSIVE - TABLET ==================== */
+@media (max-width: 1024px) and (min-width: 769px) {
     .chessboard {
-        width: 360px;
-        height: 360px;
-        grid-template-columns: repeat(8, 1fr);
+        width: 440px;
+        height: 440px;
     }
 
     .square {
-        width: 45px;
-        height: 45px;
-        font-size: 30px;
+        width: 55px;
+        height: 55px;
+        font-size: 38px;
+    }
+}
+
+/* ==================== RESPONSIVE - MOBILE ==================== */
+@media (max-width: 768px) {
+    .container {
+        flex-direction: column;
+        padding: 10px;
+    }
+
+    .chessboard {
+        width: 400px;
+        height: 400px;
+        grid-template-columns: repeat(8, 1fr);
+        border: 2px solid #333;
+    }
+
+    .square {
+        width: 50px;
+        height: 50px;
+        font-size: 36px;
     }
 
     .game-board-container {
         min-width: 100%;
+    }
+
+    .auth-panel {
+        max-width: 100%;
+        padding: 30px 20px;
+    }
+
+    .mode-buttons {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .mode-btn {
+        width: 100%;
+    }
+
+    h1 {
+        font-size: 28px;
+    }
+}
+
+/* ==================== RESPONSIVE - SMALL MOBILE ==================== */
+@media (max-width: 480px) {
+    .chessboard {
+        width: 320px;
+        height: 320px;
+    }
+
+    .square {
+        width: 40px;
+        height: 40px;
+        font-size: 30px;
+    }
+
+    .auth-panel {
+        padding: 20px 15px;
+    }
+
+    h1 {
+        font-size: 24px;
+    }
+
+    .mode-btn {
+        padding: 20px 15px;
+    }
+
+    .btn-primary {
+        padding: 12px;
+        font-size: 14px;
+    }
+}
+
+/* ==================== RESPONSIVE - VERY SMALL (iPhone SE) ==================== */
+@media (max-width: 375px) {
+    .chessboard {
+        width: 280px;
+        height: 280px;
+    }
+
+    .square {
+        width: 35px;
+        height: 35px;
+        font-size: 26px;
+    }
+
+    body {
+        padding: 10px;
+    }
+
+    .auth-header h1 {
+        font-size: 28px;
     }
 }
 
